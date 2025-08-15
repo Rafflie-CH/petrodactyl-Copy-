@@ -1,0 +1,10 @@
+{
+  "name": "vercel-code-runner",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "vercel dev"
+  },
+  "dependencies": {},
+  "type": "module"
+}
