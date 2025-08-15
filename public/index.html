@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Kode VPS</title>
+    <style>
+        body { font-family: sans-serif; background-color: #2e3440; color: #d8dee9; margin: 0; display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background-color: #3b4252; padding: 20px; }
+        .sidebar ul { list-style: none; padding: 0; }
+        .sidebar li { padding: 10px; cursor: pointer; transition: background-color 0.3s; }
+        .sidebar li:hover { background-color: #4c566a; }
+        .main-content { flex-grow: 1; padding: 20px; display: flex; flex-direction: column; }
+        #code-editor { width: 100%; height: 300px; background-color: #4c566a; color: #d8dee9; border: none; font-family: monospace; padding: 15px; }
+        #terminal-output, #output { background-color: #222; color: #fff; padding: 15px; margin-top: 10px; font-family: monospace; white-space: pre-wrap; }
+        #run-button { padding: 10px 20px; cursor: pointer; background-color: #88c0d0; color: #2e3440; border: none; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h3>File Manager</h3>
+        <ul id="file-list">
+            <li>Loading...</li>
+        </ul>
+    </div>
+    <div class="main-content">
+        <h1>Panel Kode</h1>
+        <textarea id="code-editor" placeholder="console.log('Hello from Node.js!');"></textarea>
+        <button id="run-button" onclick="runCode()">Jalankan Kode (Node.js)</button>
+        <h3>Terminal Output</h3>
+        <pre id="terminal-output"></pre>
+        <h3>Output Kode</h3>
+        <pre id="output"></pre>
+    </div>
+
+    <script>
+        const runButton = document.getElementById('run-button');
+        const codeEditor = document.getElementById('code-editor');
+        const outputEl = document.getElementById('output');
+        const terminalOutput = document.getElementById('terminal-output');
+        const fileList = document.getElementById('file-list');
+
+        // Fungsi untuk mengambil daftar file
+        async function fetchFiles() {
+            try {
+                const response = await fetch('/api/files');
+                const files = await response.json();
+                fileList.innerHTML = files.map(file => `<li>${file}</li>`).join('');
+            } catch (error) {
+                fileList.innerHTML = '<li>Error loading files.</li>';
+                console.error('Error fetching files:', error);
+            }
+        }
+
+        // Fungsi untuk menjalankan kode
+        async function runCode() {
+            const code = codeEditor.value;
+            outputEl.textContent = 'Menjalankan kode...';
+            terminalOutput.textContent = 'Mempersiapkan container...';
+
+            try {
+                const response = await fetch('/api/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code, language: 'nodejs' })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error);
+                }
+
+                const result = await response.json();
+                terminalOutput.textContent = result.log;
+                outputEl.textContent = result.output;
+
+            } catch (error) {
+                outputEl.textContent = `Error: ${error.message}`;
+                terminalOutput.textContent = '';
+            }
+        }
+
+        // Panggil saat halaman dimuat
+        fetchFiles();
+    </script>
+</body>
+</html>
